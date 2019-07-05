@@ -2,20 +2,27 @@
 #include "FastLED.h"
 #include "BluetoothSerial.h"
 #include <NewPing.h>
+#include <QTRSensors.h>
+
+#define INCH_TO_UNIT 100/6.68
 
 // LED definitions
 #define Neopixel_PIN 1
 #define NUM_LEDS 7
 CRGB leds[NUM_LEDS];
 
+//line sensor declarations
+QTRSensors qtr;
+const uint8_t SensorCount = 3;
+uint16_t sensorValues[SensorCount];
+
 // Motor definitions
-int forwardSpeed = 20000;
-int reverseSpeed = 10000;
-int turnSpeed = 5000;
-int driveDistance = 200;
-int turnDistance = 33;
-int pauseTime = 3000;
-boolean headlights = false;
+const int straightSpeed = 20000;
+const int turnSpeed = 15000;
+const double cornerToLeft = 12; //TODO MEASURE
+const double cornerToRight = .5; //TODO MEASURE
+const double driveWidth = 5.5; //TODO MEASURE
+
 
 // bluetooth definitions
 BluetoothSerial SerialBT;
@@ -41,8 +48,11 @@ void setup() {
   Serial.begin(115200);
   SerialBT.begin("RobotDowneyJr");
 
-  // Distance communication
+  //Line Sensor init
+  qtr.setTypeRC();
+  qtr.setSensorPins((const uint8_t[]) {2,5,15}, SensorCount);
 
+  delay(500);
 
   // give grbl time to set up
   delay(1000);
@@ -52,69 +62,64 @@ void setup() {
   M5.Lcd.setTextSize(2);
   M5.Lcd.setTextColor(CYAN);
   M5.Lcd.setCursor(40, 0);
-  M5.Lcd.println("Bluetooth Test");
+  M5.Lcd.println("Traffic Stop");
   M5.Lcd.setTextColor(WHITE);
   M5.Lcd.setCursor(0, 25);
-  M5.Lcd.println("\n- Send F: Drive Forward");
-  M5.Lcd.println("\n- Send B: Drive Backward");
-  M5.Lcd.println("\n- Send L: Turn Left");
-  M5.Lcd.println("\n- Send R: Turn Right"); // gambol
+  M5.Lcd.println("Calibrating");
+
+  for(int i = 0; i < 400; i++) {
+    qtr.calibrate();
+  }
+  
+  M5.Lcd.println("Done Calibrating");
 }
 
 void loop() {
-  if (headlights) {
-    fill_solid(leds, NUM_LEDS, CRGB::White);
-  }
-  else {
-    fill_solid(leds, NUM_LEDS, CRGB::Black);
-  }
-  FastLED.show();
-
-  char in = SerialBT.read();
-
-  if (in == 'F') {
-    driveForward();
-  }
-  else if (in == 'B') {
-    driveBackward();
-  }
-  else if (in == 'R') {
-    turnRight();
-  }
-  else if (in == 'L') {
-    turnLeft();
-  }
-  else if (in == 'H') {
-    headlights = !headlights;
-  }
-  else if (in == 'D') {
-    SerialBT.print(sonar.ping_cm());
-  }
-  else if (in == 'F') {
-    follow();
-  }
-}
-
-void driveForward() {
-  Serial2.printf("$J = G21 G91 X%d Y%d F%d", driveDistance, driveDistance, forwardSpeed);
-  Serial2.print("\r\n\r\n");
-}
-
-void driveBackward() {
-  Serial2.printf("$J = G21 G91 X%d Y%d F%d", -driveDistance, -driveDistance, reverseSpeed);
-  Serial2.print("\r\n\r\n");
-}
-
-void turnLeft() {
-  Serial2.printf("$J = G21 G91 X%d Y%d F%d", -turnDistance, turnDistance, turnSpeed);
-  Serial2.print("\r\n\r\n");
-}
-
-void turnRight() {
-  Serial2.printf("$J = G21 G91 X%d Y%d F%d", turnDistance, -turnDistance, turnSpeed);
-  Serial2.print("\r\n\r\n");
-}
-
-void follow() {
+  //move indefinitely forward to the intersection
+  //move(10000, 10000, 20000);
   
+  //wait for line sensor to be triggered by intersection
+//  while() {
+//    delay(1);
+//  }
+//
+//  //stop();
+//
+//  delay(10000);
+
+
+  uint16_t position = qtr.readLineBlack(sensorValues);
+
+  M5.Lcd.setCursor(0,10);
+  M5.Lcd.printf("position = %4d", position);
+  M5.Lcd.setCursor(0,50);
+  M5.Lcd.println("calibrated values:");
+  M5.Lcd.printf("%4d, %4d, %4d", sensorValues[0], sensorValues[1], sensorValues[2]);
+
+  qtr.read(sensorValues);
+  M5.Lcd.setCursor(0,90);
+  M5.Lcd.println("raw values:"); 
+  M5.Lcd.printf("%4d, %4d, %4d", sensorValues[0], sensorValues[1], sensorValues[2]);
+}
+
+void drive(double left, double right, double speed) {
+  Serial2.printf("$J = G21 G91 X%f Y%f F%f", left, right, speed);
+  Serial2.print("\r\n\r\n");
+}
+
+void straight() {
+  drive(1000, 1000, straightSpeed);
+}
+
+void left() {
+  drive(.5 * PI * cornerToLeft * INCH_TO_UNIT, .5 * PI * (cornerToLeft + driveWidth) * INCH_TO_UNIT, turnSpeed);
+}
+
+void right() {
+  drive(.5 * PI * (cornerToRight + driveWidth) * INCH_TO_UNIT, .5 * PI * cornerToRight * INCH_TO_UNIT, turnSpeed);
+}
+
+void stop() {
+  Serial2.print((char)133);
+  Serial2.print("\r\n\r\n");
 }
