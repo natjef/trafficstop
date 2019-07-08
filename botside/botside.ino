@@ -65,41 +65,22 @@ void setup() {
   M5.Lcd.println("Traffic Stop");
   M5.Lcd.setTextColor(WHITE);
   M5.Lcd.setCursor(0, 25);
-  M5.Lcd.println("Calibrating");
-
-  for(int i = 0; i < 400; i++) {
-    qtr.calibrate();
-  }
-  
-  M5.Lcd.println("Done Calibrating");
 }
 
 void loop() {
+  M5.Lcd.clear();
   //move indefinitely forward to the intersection
-  //move(10000, 10000, 20000);
+  drive(10000, 10000, 20000);
   
   //wait for line sensor to be triggered by intersection
-//  while() {
-//    delay(1);
-//  }
-//
-//  //stop();
-//
-//  delay(10000);
+  do {
+    qtr.read(sensorValues);
+    delay(1);  
+  } while( (sensorValues[0] + sensorValues[1] + sensorValues[2]) / 3 < 1000);
 
+  stop();
 
-  uint16_t position = qtr.readLineBlack(sensorValues);
-
-  M5.Lcd.setCursor(0,10);
-  M5.Lcd.printf("position = %4d", position);
-  M5.Lcd.setCursor(0,50);
-  M5.Lcd.println("calibrated values:");
-  M5.Lcd.printf("%4d, %4d, %4d", sensorValues[0], sensorValues[1], sensorValues[2]);
-
-  qtr.read(sensorValues);
-  M5.Lcd.setCursor(0,90);
-  M5.Lcd.println("raw values:"); 
-  M5.Lcd.printf("%4d, %4d, %4d", sensorValues[0], sensorValues[1], sensorValues[2]);
+  delay(10000);
 }
 
 void drive(double left, double right, double speed) {
