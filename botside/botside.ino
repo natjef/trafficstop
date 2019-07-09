@@ -70,7 +70,7 @@ void setup() {
 void loop() {
   M5.Lcd.clear();
   //move indefinitely forward to the intersection
-  drive(10000, 10000, 20000);
+  drive(10000, 10000, 10000);
   
   //wait for line sensor to be triggered by intersection
   do {
