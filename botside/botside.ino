@@ -20,8 +20,8 @@ uint16_t sensorValues[SensorCount];
 const int straightSpeed = 20000;
 const int turnSpeed = 15000;
 const double cornerToLeft = 12; //TODO MEASURE
-const double cornerToRight = .5; //TODO MEASURE
-const double driveWidth = 5.5; //TODO MEASURE
+const double cornerToRight = 2; //TODO MEASURE
+const double driveWidth = 6; //TODO MEASURE
 
 
 // bluetooth definitions
@@ -34,6 +34,8 @@ int maxDistance = 200;
 long duration, cm;
 
 NewPing sonar(trigPin, echoPin, maxDistance);
+
+int choice=0;
 
 void setup() {
   M5.begin();
@@ -54,6 +56,8 @@ void setup() {
 
   delay(500);
 
+  randomSeed(analogRead(0));
+
   // give grbl time to set up
   delay(1000);
 
@@ -68,7 +72,14 @@ void setup() {
 }
 
 void loop() {
+ choice = random(3);
+  
   M5.Lcd.clear();
+  M5.Lcd.setTextSize(4);
+  if(choice == 0) M5.Lcd.print("LEFT");
+  else if(choice == 1) M5.Lcd.print("STRAIGHT");
+  else if(choice == 2) M5.Lcd.print("RIGHT");
+  
   //move indefinitely forward to the intersection
   drive(10000, 10000, 10000);
   
@@ -80,6 +91,17 @@ void loop() {
 
   stop();
 
+  //wait for its turn to go
+  delay(3000);
+
+  //go
+  if(choice == 0) left();
+  else if(choice == 1) straight();
+  else if(choice == 2) right();
+
+  delay(3000);
+  drive(100, 100, 10000);
+  
   delay(10000);
 }
 
@@ -89,7 +111,7 @@ void drive(double left, double right, double speed) {
 }
 
 void straight() {
-  drive(1000, 1000, straightSpeed);
+  drive(350, 350, straightSpeed);
 }
 
 void left() {
