@@ -3,8 +3,8 @@
 #include "BluetoothSerial.h"
 #include <NewPing.h>
 #include <QTRSensors.h>
-
-#define INCH_TO_UNIT 100/6.68
+#include <WiFi.h>
+#include <WiFiMulti.h>
 
 // LED definitions
 #define Neopixel_PIN 1
@@ -17,15 +17,17 @@ const uint8_t SensorCount = 3;
 uint16_t sensorValues[SensorCount];
 
 // Motor definitions
+#define INCH_TO_UNIT 100/6.68
 const int straightSpeed = 20000;
 const int turnSpeed = 15000;
 const double cornerToLeft = 12; //TODO MEASURE
 const double cornerToRight = 2; //TODO MEASURE
 const double driveWidth = 6; //TODO MEASURE
 
-
-// bluetooth definitions
-BluetoothSerial SerialBT;
+// networking definitions
+WiFiMulti WiFiMulti;
+const uint16_t port = 80;
+const char * host = "192.168.1.1"; // ip or dns
 
 // ultrasonic senor defs
 int trigPin = 26;   // Trigger
@@ -35,7 +37,7 @@ long duration, cm;
 
 NewPing sonar(trigPin, echoPin, maxDistance);
 
-int choice=0;
+int choice = 0;
 
 void setup() {
   M5.begin();
@@ -43,22 +45,46 @@ void setup() {
   FastLED.addLeds<WS2811, Neopixel_PIN, RGB>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.clear();
 
-  M5.Lcd.print("LOADING...");
+  M5.Lcd.println("LOADING...");
 
   // setup Nano communcation
   Serial2.begin(115200, SERIAL_8N1, 16, 17);
   Serial.begin(115200);
-  SerialBT.begin("RobotDowneyJr");
 
   //Line Sensor init
   qtr.setTypeRC();
-  qtr.setSensorPins((const uint8_t[]) {2,5,15}, SensorCount);
+  qtr.setSensorPins((const uint8_t[]) {
+    2, 5, 15
+  }, SensorCount);
 
-  delay(500);
+  // Networking init - heavy
+  WiFiMulti.addAP("trafficbot", "trafficbot"); // user, pass
+
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextColor(RED);
+  M5.Lcd.print("Waiting for WiFi");
+
+  int i = 0;
+
+  while (WiFiMulti.run() != WL_CONNECTED) {
+    M5.Lcd.print(".");
+    i++
+    if (i == 3) {
+      M5.Lcd.clear();
+      M5.Lcd.println("LOADING...\nWaiting for Wifi");
+    }
+    delay(500);
+  }
+
+  M5.Lcd.print("WiFi connected! IP address: ")
+  M5.Lcd.println(WiFi.localIP());
+
+  WiFiClient client;
+  client.connect(host, port);  
 
   randomSeed(analogRead(0));
 
-  // give grbl time to set up
+  // give grbl time to set up - MIGHT BE UNNEEDED SINCE WIFI TAKES TIME ANYWAY
   delay(1000);
 
   // display info about the program
@@ -72,23 +98,22 @@ void setup() {
 }
 
 void loop() {
-  delay(random(5000));
   choice = random(3);
-  
+
   M5.Lcd.clear();
   M5.Lcd.setTextSize(4);
-  if(choice == 0) M5.Lcd.print("LEFT");
-  else if(choice == 1) M5.Lcd.print("STRAIGHT");
-  else if(choice == 2) M5.Lcd.print("RIGHT");
-  
+  if (choice == 0) M5.Lcd.print("LEFT");
+  else if (choice == 1) M5.Lcd.print("STRAIGHT");
+  else if (choice == 2) M5.Lcd.print("RIGHT");
+
   //move indefinitely forward to the intersection
   drive(10000, 10000, 10000);
-  
+
   //wait for line sensor to be triggered by intersection
   do {
     qtr.read(sensorValues);
-    delay(1);  
-  } while( (sensorValues[0] + sensorValues[1] + sensorValues[2]) / 3 < 1000);
+    delay(1);
+  } while ( (sensorValues[0] + sensorValues[1] + sensorValues[2]) / 3 < 1000);
 
   stop();
 
@@ -96,13 +121,13 @@ void loop() {
   delay(3000);
 
   //go
-  if(choice == 0) left();
-  else if(choice == 1) straight();
-  else if(choice == 2) right();
+  if (choice == 0) left();
+  else if (choice == 1) straight();
+  else if (choice == 2) right();
 
   delay(3000);
   drive(100, 100, 10000);
-  
+
   delay(10000);
 }
 
