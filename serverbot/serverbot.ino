@@ -1,8 +1,8 @@
+#include <queue>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiAP.h>
 #include <M5Stack.h> 
-#include <queue>
 
 const char *ssid = "trafficbot";
 const char *password = "Tiuk34562";
@@ -87,6 +87,8 @@ void loop() {
 //    handleMessage(3, l);
 //  }
 
+  if(!queue.empty()) executeIntersection();
+
   delay(10);
 }
 
@@ -114,6 +116,7 @@ void broadcastMessage(String message) {
 }
 
 void executeIntersection() {
+  Serial.println("executing intersection...");
   const String go = "GO";
   while(!queue.empty()) {
     int id = queue.front();

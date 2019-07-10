@@ -70,9 +70,15 @@ void loop()
     delay(500);
   }
 
-  String mes = waitForMessage();
-  Serial.println(mes);
+  sendMessage("ARRIVED");
 
+  int receivedId = 0;
+  do {
+    receivedId = waitForMessage.substring(0,1).toInt();
+  } while(receivedId != id);
+
+  //go
+  ifc
   delay(100);
 }
 
