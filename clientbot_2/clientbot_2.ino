@@ -9,12 +9,14 @@
 
 WiFiMulti WiFiMulti;
 WiFiClient client;
+const uint16_t port = 80;
+const char * host = "192.168.4.1"; // ip or dns
 
 
 void setup()
 {
   // We start by connecting to a WiFi network
-  WiFiMulti.addAP("trafficbot", "trafficbot");
+  WiFiMulti.addAP("trafficbot", "Tiuk34562");
   M5.begin();
 
   M5.Lcd.setTextSize(2);
@@ -37,26 +39,25 @@ void setup()
   M5.Lcd.println("WiFi connected! IP address: ");
   M5.Lcd.println(WiFi.localIP());
 
-  const uint16_t port = 80;
-  const char * host = "192.168.4.2"; // ip or dns
-
   Serial.print("Connecting to ");
   Serial.println(host);
 
   // Use WiFiClient class to create TCP connections
 
   delay(500);
-
-  while (!client.connect(host, port)) {
-    Serial.println("Connection failed.");
-    Serial.println("Waiting 5 seconds before retrying...");
-    delay(5000);
-  }
 }
 
 void loop()
 {
+  if (!client.connect(host, port)) {
+    Serial.println("Connection failed.");
+    Serial.println("Waiting 5 seconds before retrying...");
+    delay(5000);
+    return;
+  }
+  
   M5.Lcd.print("Loop Entered.");
+  
   // This will send a request to the server
   client.print("Hello! it is I, a robot!");
 

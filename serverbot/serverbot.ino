@@ -4,7 +4,7 @@
 #include <M5Stack.h>
 
 const char *ssid = "trafficbot";
-const char *password = "trafficbot";
+const char *password = "Tiuk34562";
 WiFiServer server(80);
 int numBots = 0;
 
@@ -17,7 +17,7 @@ void setup() {
   M5.Lcd.println("Configuring access point...");
 
   WiFi.softAP(ssid, password);
-  IPAddress myIP = IPAddress(192, 168, 1, 1);
+  IPAddress myIP = WiFi.softAPIP();
   M5.Lcd.print("AP IP address: ");
   M5.Lcd.println(myIP);
   server.begin();
@@ -30,13 +30,17 @@ void loop() {
   // get everyone connected - #TODO: MAKE THIS A LOOP + ARRAY
 
   WiFiClient client = server.available();
+  WiFiClient client2 = server.available();
 
   if (client) {
     Serial.println("New Client.");
     String l = client.readStringUntil('\r');
     Serial.println(l);
+  }
 
-    client.stop();
-    Serial.println("Client Disconnected.");
+  if(client2) {
+    Serial.println("client 2");
+    String l = client2.readStringUntil('\r');
+    Serial.println(l); 
   }
 }
