@@ -11,7 +11,9 @@ WiFiMulti WiFiMulti;
 WiFiClient client;
 const uint16_t port = 80;
 const char * host = "192.168.4.1"; // ip or dns
+const String space = " ";
 
+int id=0;
 
 void setup()
 {
@@ -47,22 +49,56 @@ void setup()
   delay(500);
 }
 
+bool once = true;
+
 void loop()
 {
-  if (!client.connect(host, port)) {
-    Serial.println("Connection failed.");
-    Serial.println("Waiting 5 seconds before retrying...");
-    delay(5000);
-    return;
+  while(!id) {
+    if (!client.connect(host, port)) {
+      Serial.println("Connection failed.");
+      Serial.println("Waiting 5 seconds before retrying..."); 
+      delay(5000);
+      return;
+    }
+    
+    M5.Lcd.print("Loop Entered.");
+  
+    //read back one line from the server
+    String line = client.readStringUntil('\r');
+    id = line.toInt();    
+    sendMessage("HI");
+    delay(500);
   }
-  
-  M5.Lcd.print("Loop Entered.");
-  
-  // This will send a request to the server
-  client.print("Hello! it is I, a robot!");
 
-  //read back one line from the server
-  String line = client.readStringUntil('\r');
-  Serial.println(line);
-  delay(5000);
+  String mes = waitForMessage();
+  Serial.println(mes);
+
+  delay(100);
+}
+
+void sendMessage(String message) {
+  while (!client.connect(host, port)) {
+      Serial.println("Connection failed.");
+      Serial.println("Waiting 5 seconds before retrying..."); 
+      delay(5000);
+  }
+  String send = id + space + message;
+  client.println(send);
+}
+
+String waitForMessage() {
+  while (!client.connect(host, port)) {
+      Serial.println("Connection failed.");
+      Serial.println("Waiting 5 seconds before retrying..."); 
+      delay(5000);
+  }
+
+  String message;
+  do {
+    message = client.readStringUntil('\r');
+    Serial.println("waiting for message");
+    delay(10);
+  } while(message == "");
+
+  return message;
 }
