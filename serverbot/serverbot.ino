@@ -33,12 +33,8 @@ void loop() {
 
   if (client) {
     Serial.println("New Client.");
-    client.printf("You are Bot #%d", numBots++);
-    String curline = "";
-    while (client.connected()) {
-      char c = client.read();
-      Serial.write(c);
-    }
+    String l = client.readStringUntil('\r');
+    Serial.println(l);
 
     client.stop();
     Serial.println("Client Disconnected.");
