@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-void setup() {
-  // put your setup code here, to run once:
-=======
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiAP.h>
@@ -27,15 +23,10 @@ void setup() {
   server.begin();
 
   M5.Lcd.println("Server started! Check serial monitor for debug.");
->>>>>>> f57cc52c177748f0498efcf29080971198b2a4d5
 
 }
 
 void loop() {
-<<<<<<< HEAD
-  // put your main code here, to run repeatedly:
-
-=======
   // get everyone connected - #TODO: MAKE THIS A LOOP + ARRAY
 
   WiFiClient client = server.available();
@@ -52,5 +43,4 @@ void loop() {
     client.stop();
     Serial.println("Client Disconnected.");
   }
->>>>>>> f57cc52c177748f0498efcf29080971198b2a4d5
 }
