@@ -20,6 +20,7 @@ uint16_t sensorValues[SensorCount];
 const int straightSpeed = 10000;
 const int turnSpeed = 8000;
 const double cornerToLeft = 12; //12
+const double cornerToLeftArya = 16;
 const double cornerToRight = 2; //2
 const double driveWidth = 6; //6
 
@@ -295,6 +296,73 @@ void left() {
     } while (cm <= 7);
     
     if (obstacle) drive(.5 * PI * cornerToLeft * INCH_TO_UNIT, .5 * PI * (cornerToLeft + driveWidth) * INCH_TO_UNIT, turnSpeed);
+
+    //wait for line sensor to be triggered by intersection
+    do {
+      qtr.read(sensorValues);
+      delay(1);
+    } while( (sensorValues[0] + sensorValues[1] + sensorValues[2]) / 3 < 1000);
+
+    stop();
+    delay(5000);
+}
+
+void leftArya() {
+    
+    drive(.75 * PI * cornerToLeftArya * INCH_TO_UNIT, .75 * PI * (cornerToLeftArya + driveWidth) * INCH_TO_UNIT, turnSpeed);
+    do {
+      
+      digitalWrite(trigPin, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin, LOW);
+      duration = pulseIn(echoPin, HIGH);
+      cm = duration*0.034/2;
+
+      M5.Lcd.setTextSize(3);
+      M5.Lcd.setTextColor(GREEN);
+      M5.Lcd.setCursor(10,10);
+      M5.Lcd.clear(BLACK);
+      M5.Lcd.setCursor(10,10);
+      M5.Lcd.print("Distance: ");
+      M5.Lcd.print(cm);
+
+      qtr.read(sensorValues);
+      delay(1);
+      if ((sensorValues[0] + sensorValues[1] + sensorValues[2]) / 3 > 1000) 
+      {
+        obstacle = 0;
+        break;
+      }
+      
+    } while (cm > 7);  
+    
+    stop();
+    
+    M5.Lcd.setTextSize(3);
+    M5.Lcd.setTextColor(GREEN);
+    M5.Lcd.setCursor(10,10);
+    M5.Lcd.clear(BLACK);
+    M5.Lcd.setCursor(10,10);
+    
+    do{
+      
+      digitalWrite(trigPin, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin, LOW);
+      duration = pulseIn(echoPin, HIGH);
+      cm = duration*0.034/2;
+      
+      M5.Lcd.setTextSize(3);
+      M5.Lcd.setTextColor(GREEN);
+      M5.Lcd.setCursor(10,10);
+      M5.Lcd.clear(BLACK);
+      M5.Lcd.setCursor(10,10);
+      M5.Lcd.print("Distance Left: ");
+      M5.Lcd.print(cm);
+      delay(1);
+    } while (cm <= 7);
+    
+    if (obstacle) drive(.5 * PI * cornerToLeftArya * INCH_TO_UNIT, .5 * PI * (cornerToLeftArya + driveWidth) * INCH_TO_UNIT, turnSpeed);
 
     //wait for line sensor to be triggered by intersection
     do {
