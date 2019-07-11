@@ -35,7 +35,7 @@ bool once = true;
 void loop() {
 
   if(once) {    
-    while(numBots < 3) {
+    while(numBots < 2) {
       client = server.available();
 
       if(client) {
