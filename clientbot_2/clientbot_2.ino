@@ -7,6 +7,7 @@
 #include <WiFiMulti.h>
 #include <M5Stack.h>
 
+
 WiFiMulti WiFiMulti;
 WiFiClient client;
 const uint16_t port = 80;
@@ -60,26 +61,39 @@ void loop()
       delay(5000);
       return;
     }
-    
-    M5.Lcd.print("Loop Entered.");
-  
-    //read back one line from the server
-    String line = client.readStringUntil('\r');
-    id = line.toInt();    
-    sendMessage("HI");
     delay(500);
+    //read back one line from the server
+    if(once) {
+      sendMessage("HI");
+      once = false;
+    }
+    id = waitForMessage().toInt();
+    Serial.println(id);
+    delay(50);
   }
 
+  M5.Lcd.printf("My id is %d\n", id); 
+  //give others time to connect
+  delay(10000);
+  //stop at interseciton
+
+  M5.Lcd.println("Stopping at intersection");
+  //after arriving at intersection
   sendMessage("ARRIVED");
 
   int receivedId = 0;
   do {
-    receivedId = waitForMessage.substring(0,1).toInt();
+    receivedId = waitForMessage().substring(0,1).toInt();
+    M5.Lcd.printf("ID received is %d\n", receivedId);
   } while(receivedId != id);
 
   //go
-  ifc
-  delay(100);
+  M5.Lcd.println("going!");
+  delay(5000);
+  M5.Lcd.println("completed intersection!");
+  const String done = "DONE";
+  client.println(id + space + done);
+  delay(100000);
 }
 
 void sendMessage(String message) {
@@ -93,17 +107,11 @@ void sendMessage(String message) {
 }
 
 String waitForMessage() {
-  while (!client.connect(host, port)) {
-      Serial.println("Connection failed.");
-      Serial.println("Waiting 5 seconds before retrying..."); 
-      delay(5000);
-  }
 
   String message;
   do {
     message = client.readStringUntil('\r');
-    Serial.println("waiting for message");
-    delay(10);
+    Serial.println("waiting");
   } while(message == "");
 
   return message;
